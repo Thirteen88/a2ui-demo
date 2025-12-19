@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A2UI Agent Cluster Interface - Public Demo</title>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #ffffff;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+            padding: 30px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #3b82f6, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header p {
+            color: #9ca3af;
+            font-size: 1.2em;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: linear-gradient(135deg, rgba(26, 26, 26, 0.9), rgba(42, 42, 42, 0.9));
+            border: 1px solid #374151;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+        .card h3 {
+            color: #ffffff;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .status {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status.healthy {
+            background: linear-gradient(45deg, #10b981, #059669);
+            color: white;
+        }
+        .status.warning {
+            background: linear-gradient(45deg, #f59e0b, #d97706);
+            color: white;
+        }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+            padding: 12px 0;
+            border-bottom: 1px solid #374151;
+        }
+        .metric:last-child {
+            border-bottom: none;
+        }
+        .btn {
+            background: linear-gradient(45deg, #3b82f6, #2563eb);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: all 0.2s;
+            margin: 5px;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        .btn:hover {
+            background: linear-gradient(45deg, #2563eb, #1d4ed8);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        .form-group { margin: 20px 0; }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #e5e7eb;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #374151;
+            border-radius: 8px;
+            background: rgba(42, 42, 42, 0.8);
+            color: white;
+            font-size: 0.95em;
+            transition: border-color 0.2s;
+        }
+        .task-item {
+            background: rgba(42, 42, 42, 0.6);
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 10px;
+            border-left: 4px solid #3b82f6;
+            transition: transform 0.2s;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #374151;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #10b981);
+            transition: width 0.3s ease;
+        }
+        .demo-notice {
+            background: linear-gradient(45deg, #8b5cf6, #7c3aed);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 600;
+        }
+        .badge {
+            background: linear-gradient(45deg, #8b5cf6, #7c3aed);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        @media (max-width: 768px) {
+            .container { padding: 15px; }
+            .grid { grid-template-columns: 1fr; gap: 15px; }
+            .header h1 { font-size: 2em; }
+            .card { padding: 20px; }
+        }
+    </style>
+</head>
+<body x-data="a2uiApp()">
+    <div class="container">
+        <div class="demo-notice">
+            🎨 A2UI Public Demo - Interactive Agent Cluster Interface<br>
+            <span style="font-size: 0.9em; opacity: 0.9;">Real-time monitoring and control demonstration</span>
+        </div>
+
+        <div class="header">
+            <h1>🤖 A2UI Agent Cluster Interface</h1>
+            <p>Real-time monitoring and control of your AI ecosystem</p>
+            <p style="margin-top: 10px; font-size: 0.9em; color: #6b7280;">
+                <span class="badge">Live Demo</span>
+                Powered by A2UI Protocol
+            </p>
+        </div>
+
+        <div class="grid">
+            <!-- System Status Card -->
+            <div class="card">
+                <h3>🖥️ System Status</h3>
+                <div class="metric">
+                    <span>Overall Health</span>
+                    <span class="status healthy" :class="clusterStatus.system_status" x-text="clusterStatus.system_status"></span>
+                </div>
+                <div class="metric">
+                    <span>Healthy Services</span>
+                    <span x-text="clusterStatus.healthy_services + '/' + clusterStatus.total_services"></span>
+                </div>
+                <div class="metric">
+                    <span>CPU Usage</span>
+                    <span x-text="metrics.cpu.toFixed(1) + '%'"></span>
+                </div>
+                <div class="metric">
+                    <span>Memory Usage</span>
+                    <span x-text="metrics.memory.toFixed(1) + '%'"></span>
+                </div>
+                <div class="metric">
+                    <span>Uptime</span>
+                    <span>2d 14h 32m</span>
+                </div>
+                <button class="btn" @click="refreshData()">🔄 Refresh</button>
+            </div>
+
+            <!-- Services Status Card -->
+            <div class="card">
+                <h3>🔧 Services Status</h3>
+                <div class="metric">
+                    <span>Orchestrator</span>
+                    <span class="status healthy">✅ Healthy</span>
+                </div>
+                <div class="metric">
+                    <span>Memory System</span>
+                    <span class="status healthy">✅ Healthy</span>
+                </div>
+                <div class="metric">
+                    <span>Web Agent</span>
+                    <span class="status healthy">✅ Healthy</span>
+                </div>
+                <div class="metric">
+                    <span>Model Agents</span>
+                    <span class="status healthy">✅ Healthy</span>
+                </div>
+                <div class="metric">
+                    <span>Visual Dashboard</span>
+                    <span class="status healthy">✅ Healthy</span>
+                </div>
+                <div class="metric">
+                    <span>Load Balancer</span>
+                    <span class="status healthy">✅ Healthy</span>
+                </div>
+            </div>
+
+            <!-- Quick Actions Card -->
+            <div class="card">
+                <h3>⚡ Quick Actions</h3>
+                <div style="display: grid; gap: 10px;">
+                    <button class="btn" @click="showTaskCreation()">➕ Create Task</button>
+                    <button class="btn" @click="showWorkers()">👥 Manage Workers</button>
+                    <button class="btn" @click="showPerformance()">📊 Performance</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Task Management Section -->
+        <div class="card" x-show="showTasks" x-transition>
+            <h3>🔄 Task Management</h3>
+            <form @submit.prevent="createTask($event)">
+                <div class="form-group">
+                    <label>Task Type</label>
+                    <select name="task_type" required>
+                        <option value="">Select task type...</option>
+                        <option value="web_search">🌐 Web Search</option>
+                        <option value="data_analysis">📊 Data Analysis</option>
+                        <option value="model_inference">🤖 Model Inference</option>
+                        <option value="content_generation">✍️ Content Generation</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Priority (1-10)</label>
+                    <input type="range" name="priority" min="1" max="10" value="5">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description" placeholder="Enter task description..." rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn">🚀 Create Task</button>
+            </form>
+
+            <h4 style="margin-top: 30px;">Active Tasks</h4>
+            <div id="task-list">
+                <template x-for="task in tasks" :key="task.id">
+                    <div class="task-item">
+                        <strong x-text="task.type"></strong>
+                        <div class="progress-bar">
+                            <div class="progress-fill" :style="`width: ${task.progress}%`"></div>
+                        </div>
+                        <small x-text="`Worker: ${task.worker} | Priority: ${task.priority}`"></small>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Workers Section -->
+        <div class="card" x-show="showWorkers" x-transition>
+            <h3>👥 Worker Management</h3>
+            <div class="metric">
+                <span>Total Active Workers</span>
+                <span class="status healthy" x-text="workers.total"></span>
+            </div>
+            <div class="metric">
+                <span>Web Agents</span>
+                <span x-text="workers.web"></span>
+            </div>
+            <div class="metric">
+                <span>Model Agents</span>
+                <span x-text="workers.model"></span>
+            </div>
+            <div class="metric">
+                <span>Memory Workers</span>
+                <span x-text="workers.memory"></span>
+            </div>
+            <div style="margin-top: 20px;">
+                <button class="btn" @click="scaleWorkers('web', 1)">+ Add Web Agent</button>
+                <button class="btn" @click="scaleWorkers('model', 1)">+ Add Model Agent</button>
+            </div>
+        </div>
+
+        <!-- Performance Section -->
+        <div class="card" x-show="showPerf" x-transition>
+            <h3>📊 Performance Metrics</h3>
+            <div class="metric">
+                <span>Average Response Time</span>
+                <span x-text="performance.responseTime + 'ms'"></span>
+            </div>
+            <div class="metric">
+                <span>Tasks per Second</span>
+                <span x-text="performance.tps.toFixed(1)"></span>
+            </div>
+            <div class="metric">
+                <span>Queue Length</span>
+                <span x-text="performance.queueLength"></span>
+            </div>
+            <div class="metric">
+                <span>Error Rate</span>
+                <span x-text="performance.errorRate.toFixed(1) + '%'"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function a2uiApp() {
+            return {
+                clusterStatus: {
+                    system_status: 'healthy',
+                    healthy_services: 11,
+                    total_services: 11
+                },
+                metrics: {
+                    cpu: 15.3,
+                    memory: 23.7
+                },
+                showTasks: false,
+                showWorkers: false,
+                showPerf: false,
+                tasks: [
+                    { id: 1, type: 'Web Search', progress: 75, worker: 'web_agent_01', priority: 7 },
+                    { id: 2, type: 'Model Inference', progress: 45, worker: 'model_agent_02', priority: 8 },
+                    { id: 3, type: 'Data Analysis', progress: 90, worker: 'web_agent_02', priority: 5 }
+                ],
+                workers: {
+                    total: 12,
+                    web: 3,
+                    model: 5,
+                    memory: 2
+                },
+                performance: {
+                    responseTime: 45,
+                    tps: 23.5,
+                    queueLength: 3,
+                    errorRate: 0.2
+                },
+
+                init() {
+                    // Simulate real-time updates
+                    setInterval(() => {
+                        this.updateMetrics();
+                        this.updateTaskProgress();
+                        this.updatePerformance();
+                    }, 2000);
+                },
+
+                updateMetrics() {
+                    this.metrics.cpu = Math.max(5, Math.min(40, this.metrics.cpu + (Math.random() - 0.5) * 3));
+                    this.metrics.memory = Math.max(10, Math.min(35, this.metrics.memory + (Math.random() - 0.5) * 2));
+                },
+
+                updateTaskProgress() {
+                    this.tasks.forEach(task => {
+                        if (task.progress < 100) {
+                            task.progress = Math.min(100, task.progress + Math.random() * 10);
+                        }
+                    });
+                },
+
+                updatePerformance() {
+                    this.performance.responseTime = Math.max(20, Math.min(100, this.performance.responseTime + (Math.random() - 0.5) * 10));
+                    this.performance.tps = Math.max(10, Math.min(50, this.performance.tps + (Math.random() - 0.5) * 5));
+                },
+
+                refreshData() {
+                    this.updateMetrics();
+                    this.clusterStatus.healthy_services = Math.max(8, Math.min(11, this.clusterStatus.healthy_services + Math.floor(Math.random() * 3) - 1));
+                },
+
+                createTask(event) {
+                    const formData = new FormData(event.target);
+                    const taskData = Object.fromEntries(formData.entries());
+
+                    const newTask = {
+                        id: this.tasks.length + 1,
+                        type: taskData.task_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                        progress: 0,
+                        worker: 'queued',
+                        priority: taskData.priority
+                    };
+
+                    this.tasks.unshift(newTask);
+                    event.target.reset();
+
+                    alert(`Task created successfully!\nType: ${taskData.task_type}\nPriority: ${taskData.priority}`);
+                },
+
+                showTaskCreation() {
+                    this.showTasks = !this.showTasks;
+                    this.showWorkers = false;
+                    this.showPerf = false;
+                },
+
+                showWorkers() {
+                    this.showWorkers = !this.showWorkers;
+                    this.showTasks = false;
+                    this.showPerf = false;
+                },
+
+                showPerformance() {
+                    this.showPerf = !this.showPerf;
+                    this.showTasks = false;
+                    this.showWorkers = false;
+                },
+
+                scaleWorkers(type, delta) {
+                    if (type === 'web') {
+                        this.workers.web = Math.max(1, Math.min(10, this.workers.web + delta));
+                        this.workers.total = this.workers.web + this.workers.model + this.workers.memory;
+                    } else if (type === 'model') {
+                        this.workers.model = Math.max(1, Math.min(8, this.workers.model + delta));
+                        this.workers.total = this.workers.web + this.workers.model + this.workers.memory;
+                    }
+                    alert(`${type} agents scaled! New count: ${this.workers[type === 'web' ? 'web' : 'model']}`);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
